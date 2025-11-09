@@ -1,0 +1,98 @@
+@HappyFactory_HostAddress = http://localhost:5116
+
+# HappyFactory HTTP examples (JetBrains HTTP client)
+# - Usage: open this file with JetBrains/IntelliJ HTTP client.
+# - Ensure the app is running (dotnet run ...) and, if you want Swagger UI, run with ASPNETCORE_ENVIRONMENT=Development.
+
+### Create product and capture id (robust JSON handling)
+POST {{HappyFactory_HostAddress}}/products
+Content-Type: application/json
+
+{
+  "name": "Toy Car",
+  "sku": "TOYCAR-001"
+}
+
+> {%
+  // Robustly handle response body which may already be parsed or a string.
+  // We guard JSON.parse to avoid "Unexpected token o in JSON at position 1".
+  var body;
+  try {
+    if (typeof response.body === 'string') {
+      try {
+        body = JSON.parse(response.body);
+      } catch (e) {
+        // If parsing fails, fall back to raw string
+        body = response.body;
+      }
+    } else if (response.body !== undefined) {
+      // Some clients provide an already-parsed object in response.body
+      body = response.body;
+    } else if (typeof response === 'object' && response !== null && response.hasOwnProperty('parsedBody')) {
+      // fallback common alternative
+      body = response.parsedBody;
+    } else {
+      body = null;
+    }
+
+    // Only set the global var if we have an object with an id property.
+    if (body && typeof body === 'object' && body.id) {
+      client.global.set("createdProductId", String(body.id));
+    } else {
+      // If the response wasn't JSON/object or didn't contain id, store the raw response for debugging.
+      client.global.set("createdProductRaw", typeof body === 'string' ? body : JSON.stringify(body));
+    }
+  } catch (err) {
+    // Ensure script doesn't throw; capture error info for debugging.
+    client.global.set("createdProductError", String(err));
+  }
+%}
+
+### Get the created product using the captured id
+# Replace: the JetBrains HTTP client will substitute {{createdProductId}} if set by the previous script.
+GET {{HappyFactory_HostAddress}}/products/{{createdProductId}}
+Accept: application/json
+
+### Create a second product and capture into a different variable
+POST {{HappyFactory_HostAddress}}/products
+Content-Type: application/json
+
+{
+  "name": "Action Figure",
+  "sku": "ACTION-FIG-01"
+}
+
+> {%
+  var body;
+  try {
+    if (typeof response.body === 'string') {
+      try {
+        body = JSON.parse(response.body);
+      } catch (e) {
+        body = response.body;
+      }
+    } else if (response.body !== undefined) {
+      body = response.body;
+    } else if (typeof response === 'object' && response !== null && response.hasOwnProperty('parsedBody')) {
+      body = response.parsedBody;
+    } else {
+      body = null;
+    }
+
+    if (body && typeof body === 'object' && body.id) {
+      client.global.set("createdProductId2", String(body.id));
+    } else {
+      client.global.set("createdProduct2Raw", typeof body === 'string' ? body : JSON.stringify(body));
+    }
+  } catch (err) {
+    client.global.set("createdProduct2Error", String(err));
+  }
+%}
+
+### Get the second created product
+GET {{HappyFactory_HostAddress}}/products/{{createdProductId2}}
+Accept: application/json
+
+### Invalid GUID example (shows validation/error response)
+GET {{HappyFactory_HostAddress}}/products/00000000-0000-0000-0000-000000000000
+Accept: application/json
