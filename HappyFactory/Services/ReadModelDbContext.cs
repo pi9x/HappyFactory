@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 namespace HappyFactory.Services;
 
 /// <summary>
-/// EF Core read-model DbContext using InMemory provider (configured in Program.cs).
+/// EF Core read-model DbContext using InMemory provider.
 /// Contains product and inventory read-model sets.
 /// </summary>
 public class ReadModelDbContext(DbContextOptions<ReadModelDbContext> options) : DbContext(options)

@@ -16,8 +16,6 @@ public class GetProductHandler(ReadModelDbContext db)
     /// </summary>
     public async Task<GetProductResponse?> HandleAsync(GetProductRequest req, CancellationToken ct = default)
     {
-        if (req.Id == Guid.Empty) throw new ArgumentException("Id must not be empty.", nameof(req.Id));
-
         var product = await _db.Set<Product>()
             .AsNoTracking()
             .FirstOrDefaultAsync(p => p.Id == req.Id, ct);

@@ -11,7 +11,7 @@ namespace HappyFactory.Services;
 public class EventStore
 {
     private readonly List<IEvent> _events = new();
-    private readonly object _lock = new();
+    private readonly Lock _lock = new();
 
     /// <summary>
     /// Raised whenever an event is appended.
@@ -24,7 +24,7 @@ public class EventStore
     /// </summary>
     public void Append(IEvent @event)
     {
-        if (@event == null) throw new ArgumentNullException(nameof(@event));
+        ArgumentNullException.ThrowIfNull(@event);
 
         lock (_lock)
         {

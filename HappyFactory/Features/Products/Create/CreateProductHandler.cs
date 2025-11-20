@@ -22,13 +22,10 @@ public class CreateProductHandler(EventStore eventStore)
 
         var id = Guid.CreateVersion7();
 
-        // Create domain aggregate
-        var product = new Product(id, req.Name, req.Sku);
-
         // Emit domain event to the in-memory event store so projections can pick it up.
-        var ev = new ProductEvents.ProductCreated(product.Id, product.Name, product.Sku);
+        var ev = new ProductEvents.ProductCreated(id, req.Name, req.Sku);
         _eventStore.Append(ev);
 
-        return product.Id;
+        return id;
     }
 }

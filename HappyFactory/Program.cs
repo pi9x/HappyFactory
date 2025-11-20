@@ -1,4 +1,5 @@
 using FastEndpoints;
+using FastEndpoints.Swagger;
 using HappyFactory.Features.Products.Create;
 using HappyFactory.Features.Products.Get;
 using HappyFactory.Services;
@@ -7,19 +8,8 @@ using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-builder.Services.AddOpenApi();
-
 // Add FastEndpoints (vertical-slice-friendly)
-builder.Services.AddFastEndpoints();
-
-// Swagger for discovery of endpoints
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen(c =>
-{
-    c.SwaggerDoc("v1", new OpenApiInfo { Title = "Happy Factory API", Version = "v1" });
-});
+builder.Services.AddFastEndpoints().SwaggerDocument();
 
 // Read model: EF Core InMemory for queries/projections
 builder.Services.AddDbContext<ReadModelDbContext>(options =>
@@ -40,13 +30,7 @@ var app = builder.Build();
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
-    app.UseDeveloperExceptionPage();
-    app.UseSwagger();
-    app.UseSwaggerUI(c =>
-    {
-        c.SwaggerEndpoint("/swagger/v1/swagger.json", "Happy Factory API v1");
-        c.RoutePrefix = string.Empty; // serve UI at app root
-    });
+    app.UseSwaggerGen();
 }
 
 app.UseHttpsRedirection();

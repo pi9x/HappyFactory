@@ -6,9 +6,6 @@ namespace HappyFactory.Services;
 
 /// <summary>
 /// Background service that subscribes to the in-memory event store and projects events into the read model (EF InMemory).
-/// - Subscribes on StartAsync and unsubscribes on StopAsync.
-/// - Uses a scoped DbContext for each event to avoid long-living DbContext instances.
-/// - Handles known event types: ProductCreated (application event) and InventoryReserved (domain event).
 /// </summary>
 public class ProjectionService(
     EventStore eventStore,
