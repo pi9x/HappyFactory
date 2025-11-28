@@ -21,13 +21,6 @@ public class GetProductEndpoint(GetProductHandler handler) : Endpoint<GetProduct
 
     public override async Task HandleAsync(GetProductRequest req, CancellationToken ct)
     {
-        if (req.Id == Guid.Empty)
-        {
-            ValidationFailures.Add(new ValidationFailure(nameof(req.Id), "Id must be a valid GUID"));
-            await Send.ErrorsAsync(cancellation: ct);
-            return;
-        }
-
         var result = await _handler.HandleAsync(req, ct);
 
         if (result == null)

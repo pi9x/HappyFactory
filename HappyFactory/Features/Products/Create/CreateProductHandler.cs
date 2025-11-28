@@ -16,10 +16,6 @@ public class CreateProductHandler(EventStore eventStore)
     /// </summary>
     public async Task<Guid> HandleAsync(CreateProductRequest req, CancellationToken ct = default)
     {
-        ArgumentNullException.ThrowIfNull(req);
-        if (string.IsNullOrWhiteSpace(req.Name)) throw new ArgumentException("Name must be provided.", nameof(req));
-        if (string.IsNullOrWhiteSpace(req.Sku)) throw new ArgumentException("SKU must be provided.", nameof(req));
-
         var id = Guid.CreateVersion7();
 
         // Emit domain event to the in-memory event store so projections can pick it up.

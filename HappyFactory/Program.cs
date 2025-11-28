@@ -9,7 +9,10 @@ using Microsoft.OpenApi.Models;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add FastEndpoints (vertical-slice-friendly)
-builder.Services.AddFastEndpoints().SwaggerDocument();
+builder.Services.AddFastEndpoints(options =>
+{
+    options.IncludeAbstractValidators = true;
+}).SwaggerDocument();
 
 // Read model: EF Core InMemory for queries/projections
 builder.Services.AddDbContext<ReadModelDbContext>(options =>
@@ -36,6 +39,7 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 // FastEndpoints middleware (maps endpoints discovered in the app)
-app.UseFastEndpoints();
+app.UseDefaultExceptionHandler()
+    .UseFastEndpoints();
 
 app.Run();
