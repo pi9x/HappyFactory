@@ -1,6 +1,7 @@
 using HappyFactory.Models;
 using HappyFactory.Models.InventoryItems;
 using HappyFactory.Models.Products;
+using Microsoft.EntityFrameworkCore;
 
 namespace HappyFactory.Services;
 
@@ -9,20 +10,16 @@ namespace HappyFactory.Services;
 /// </summary>
 public class ProjectionService(
     EventStore eventStore,
-    IServiceScopeFactory scopeFactory,
-    ILogger<ProjectionService> logger)
+    ILogger<ProjectionService> logger,
+    IDbContextFactory<ReadModelDbContext> dbContextFactory)
     : IHostedService
 {
-    private readonly EventStore _eventStore = eventStore ?? throw new ArgumentNullException(nameof(eventStore));
-    private readonly IServiceScopeFactory _scopeFactory = scopeFactory ?? throw new ArgumentNullException(nameof(scopeFactory));
-    private readonly ILogger<ProjectionService> _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-
     // Keep a reference to the delegate so we can unsubscribe.
     private Action<IEvent>? _onEvent;
 
     public Task StartAsync(CancellationToken cancellationToken)
     {
-        _logger.LogInformation("ProjectionService starting and subscribing to EventStore.");
+        logger.LogInformation("ProjectionService starting and subscribing to EventStore.");
 
         _onEvent = ev =>
         {
@@ -30,7 +27,7 @@ public class ProjectionService(
             _ = HandleEventAsync(ev);
         };
 
-        _eventStore.EventAppended += _onEvent;
+        eventStore.EventAppended += _onEvent;
 
         // Optionally: replay existing events on startup so projection can rebuild read model
         _ = ReplayExistingEventsAsync();
@@ -40,11 +37,11 @@ public class ProjectionService(
 
     public Task StopAsync(CancellationToken cancellationToken)
     {
-        _logger.LogInformation("ProjectionService stopping and unsubscribing from EventStore.");
+        logger.LogInformation("ProjectionService stopping and unsubscribing from EventStore.");
         
         if (_onEvent != null)
         {
-            _eventStore.EventAppended -= _onEvent;
+            eventStore.EventAppended -= _onEvent;
             _onEvent = null;
         }
 
@@ -55,8 +52,8 @@ public class ProjectionService(
     {
         try
         {
-            var all = _eventStore.GetAll();
-            _logger.LogInformation("Replaying {Count} existing events into read model.", all.Count);
+            var all = eventStore.GetAll();
+            logger.LogInformation("Replaying {Count} existing events into read model.", all.Count);
             foreach (var ev in all)
             {
                 await HandleEventAsync(ev);
@@ -64,18 +61,16 @@ public class ProjectionService(
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error while replaying existing events.");
+            logger.LogError(ex, "Error while replaying existing events.");
         }
     }
 
     private async Task HandleEventAsync(IEvent ev)
     {
+        await using var db = await dbContextFactory.CreateDbContextAsync();
+        
         try
         {
-            // Create a scope for each event processing so we have a fresh DbContext.
-            using var scope = _scopeFactory.CreateScope();
-            var db = scope.ServiceProvider.GetRequiredService<ReadModelDbContext>();
-
             switch (ev)
             {
                 case ProductEvents.ProductCreated pc:
@@ -87,14 +82,14 @@ public class ProjectionService(
                     break;
 
                 default:
-                    _logger.LogDebug("ProjectionService received an unsupported event type: {Type}", ev.GetType().FullName);
+                    logger.LogDebug("ProjectionService received an unsupported event type: {Type}", ev.GetType().FullName);
                     break;
             }
         }
         catch (Exception ex)
         {
             // Log and swallow exceptions to avoid crashing the EventStore notification loop.
-            _logger.LogError(ex, "Error projecting event of type {Type}", ev.GetType().Name);
+            logger.LogError(ex, "Error projecting event of type {Type}", ev.GetType().Name);
         }
     }
 

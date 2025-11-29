@@ -7,16 +7,16 @@ namespace HappyFactory.Features.Products.Get;
 /// <summary>
 /// Query handler that reads from the read-model (EF InMemory).
 /// </summary>
-public class GetProductHandler(ReadModelDbContext db)
+public class GetProductHandler(IDbContextFactory<ReadModelDbContext> dbContextFactory)
 {
-    private readonly ReadModelDbContext _db = db ?? throw new ArgumentNullException(nameof(db));
-
     /// <summary>
     /// Returns the product if found; otherwise null.
     /// </summary>
     public async Task<GetProductResponse?> HandleAsync(GetProductRequest req, CancellationToken ct = default)
     {
-        var product = await _db.Set<Product>()
+        await using var db = await dbContextFactory.CreateDbContextAsync(ct);
+        
+        var product = await db.Set<Product>()
             .AsNoTracking()
             .FirstOrDefaultAsync(p => p.Id == req.Id, ct);
 

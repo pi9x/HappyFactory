@@ -15,7 +15,7 @@ builder.Services.AddFastEndpoints(options =>
 }).SwaggerDocument();
 
 // Read model: EF Core InMemory for queries/projections
-builder.Services.AddDbContext<ReadModelDbContext>(options =>
+builder.Services.AddPooledDbContextFactory<ReadModelDbContext>(options =>
     options.UseInMemoryDatabase("ReadModel"));
 
 // Event store (in-memory)
