@@ -1,4 +1,4 @@
-namespace HappyFactory.Models.Products;
+namespace HappyFactory.Events;
 
 public class ProductEvents
 {

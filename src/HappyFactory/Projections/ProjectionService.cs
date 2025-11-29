@@ -1,9 +1,8 @@
-using HappyFactory.Models;
-using HappyFactory.Models.InventoryItems;
-using HappyFactory.Models.Products;
+using HappyFactory.Events;
+using HappyFactory.Projections.Entities;
 using Microsoft.EntityFrameworkCore;
 
-namespace HappyFactory.Services;
+namespace HappyFactory.Projections;
 
 /// <summary>
 /// Background service that subscribes to the in-memory event store and projects events into the read model (EF InMemory).
@@ -24,13 +23,13 @@ public class ProjectionService(
         _onEvent = ev =>
         {
             // Run projection asynchronously but do not await here (EventStore invokes subscribers synchronously).
-            _ = HandleEventAsync(ev);
+            _ = HandleEventAsync(ev, cancellationToken);
         };
 
         eventStore.EventAppended += _onEvent;
 
         // Optionally: replay existing events on startup so projection can rebuild read model
-        _ = ReplayExistingEventsAsync();
+        _ = ReplayExistingEventsAsync(cancellationToken);
 
         return Task.CompletedTask;
     }
@@ -48,7 +47,7 @@ public class ProjectionService(
         return Task.CompletedTask;
     }
 
-    private async Task ReplayExistingEventsAsync()
+    private async Task ReplayExistingEventsAsync(CancellationToken cancellationToken)
     {
         try
         {
@@ -56,7 +55,7 @@ public class ProjectionService(
             logger.LogInformation("Replaying {Count} existing events into read model.", all.Count);
             foreach (var ev in all)
             {
-                await HandleEventAsync(ev);
+                await HandleEventAsync(ev, cancellationToken);
             }
         }
         catch (Exception ex)
@@ -65,20 +64,20 @@ public class ProjectionService(
         }
     }
 
-    private async Task HandleEventAsync(IEvent ev)
+    private async Task HandleEventAsync(IEvent ev, CancellationToken cancellationToken)
     {
-        await using var db = await dbContextFactory.CreateDbContextAsync();
+        await using var db = await dbContextFactory.CreateDbContextAsync(cancellationToken);
         
         try
         {
             switch (ev)
             {
                 case ProductEvents.ProductCreated pc:
-                    await HandleProductCreatedAsync(db, pc);
+                    await HandleProductCreatedAsync(db, pc, cancellationToken);
                     break;
 
                 case InventoryItemEvents.InventoryReserved ir:
-                    await HandleInventoryReservedAsync(db, ir);
+                    await HandleInventoryReservedAsync(db, ir, cancellationToken);
                     break;
 
                 default:
@@ -93,32 +92,32 @@ public class ProjectionService(
         }
     }
 
-    private static Task HandleProductCreatedAsync(ReadModelDbContext db, ProductEvents.ProductCreated ev)
+    private static async Task HandleProductCreatedAsync(ReadModelDbContext db, ProductEvents.ProductCreated ev, CancellationToken cancellationToken)
     {
         // If the product already exists in the read model, ignore.
-        var existing = db.Products.Find(ev.ProductId);
+        var existing = await db.Products.FirstOrDefaultAsync(p => p.Id == ev.ProductId, cancellationToken);
         if (existing != null)
         {
-            return Task.CompletedTask;
+            return;
         }
 
         var product = new Product(ev.ProductId, ev.Name, ev.Sku);
         db.Products.Add(product);
 
         // Ensure an InventoryItem exists for this product with quantity 0.
-        var inventory = db.InventoryItems.Find(ev.ProductId);
+        var inventory = await db.InventoryItems.FirstOrDefaultAsync(i => i.ProductId == ev.ProductId, cancellationToken);
         if (inventory == null)
         {
             db.InventoryItems.Add(new InventoryItem(ev.ProductId, 0));
         }
 
-        return db.SaveChangesAsync();
+        await db.SaveChangesAsync(cancellationToken);
     }
 
-    private static async Task HandleInventoryReservedAsync(ReadModelDbContext db, InventoryItemEvents.InventoryReserved ev)
+    private static async Task HandleInventoryReservedAsync(ReadModelDbContext db, InventoryItemEvents.InventoryReserved ev, CancellationToken cancellationToken)
     {
         // Find inventory item; create if missing (with zero).
-        var inventory = await db.InventoryItems.FindAsync(ev.ProductId);
+        var inventory = await db.InventoryItems.FirstOrDefaultAsync(i => i.ProductId == ev.ProductId, cancellationToken: cancellationToken);
         if (inventory == null)
         {
             inventory = new InventoryItem(ev.ProductId, 0);
@@ -132,6 +131,6 @@ public class ProjectionService(
         var replacement = new InventoryItem(inventory.ProductId, newQuantity);
         db.Entry(inventory).CurrentValues.SetValues(replacement);
 
-        await db.SaveChangesAsync();
+        await db.SaveChangesAsync(cancellationToken);
     }
 }

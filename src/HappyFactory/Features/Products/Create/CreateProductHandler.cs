@@ -1,5 +1,4 @@
-using HappyFactory.Models.Products;
-using HappyFactory.Services;
+using HappyFactory.Events;
 
 namespace HappyFactory.Features.Products.Create;
 

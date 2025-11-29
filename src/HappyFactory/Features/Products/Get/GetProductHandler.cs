@@ -1,5 +1,5 @@
-using HappyFactory.Models.Products;
-using HappyFactory.Services;
+using HappyFactory.Projections;
+using HappyFactory.Projections.Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace HappyFactory.Features.Products.Get;
@@ -16,7 +16,7 @@ public class GetProductHandler(IDbContextFactory<ReadModelDbContext> dbContextFa
     {
         await using var db = await dbContextFactory.CreateDbContextAsync(ct);
         
-        var product = await db.Set<Product>()
+        var product = await db.Products
             .AsNoTracking()
             .FirstOrDefaultAsync(p => p.Id == req.Id, ct);
 

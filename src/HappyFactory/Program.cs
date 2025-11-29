@@ -1,10 +1,10 @@
 using FastEndpoints;
 using FastEndpoints.Swagger;
+using HappyFactory.Events;
 using HappyFactory.Features.Products.Create;
 using HappyFactory.Features.Products.Get;
-using HappyFactory.Services;
+using HappyFactory.Projections;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 

@@ -1,6 +1,4 @@
-using HappyFactory.Models;
-
-namespace HappyFactory.Services;
+namespace HappyFactory.Events;
 
 /// <summary>
 /// Very small in-memory event store.

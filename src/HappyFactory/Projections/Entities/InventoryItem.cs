@@ -1,4 +1,4 @@
-namespace HappyFactory.Models.InventoryItems;
+namespace HappyFactory.Projections.Entities;
 
 public class InventoryItem
 {
@@ -10,8 +10,7 @@ public class InventoryItem
 
     public InventoryItem(Guid productId, int initialQuantity = 0)
     {
-        ProductId = productId != Guid.Empty ? productId : throw new ArgumentException("ProductId must not be empty.", nameof(productId));
-        if (initialQuantity < 0) throw new ArgumentOutOfRangeException(nameof(initialQuantity));
+        ProductId = productId;
         EndingQuantity = initialQuantity;
     }
 }

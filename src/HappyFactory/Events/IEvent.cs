@@ -1,4 +1,4 @@
-namespace HappyFactory.Models;
+namespace HappyFactory.Events;
 
 public interface IEvent
 {

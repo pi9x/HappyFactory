@@ -1,5 +1,4 @@
 using FastEndpoints;
-using FluentValidation.Results;
 
 namespace HappyFactory.Features.Products.Create;
 

@@ -1,4 +1,4 @@
-namespace HappyFactory.Models.InventoryItems;
+namespace HappyFactory.Events;
 
 public class InventoryItemEvents
 {

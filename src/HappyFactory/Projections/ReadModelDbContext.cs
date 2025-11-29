@@ -1,8 +1,7 @@
-using HappyFactory.Models.InventoryItems;
-using HappyFactory.Models.Products;
+using HappyFactory.Projections.Entities;
 using Microsoft.EntityFrameworkCore;
 
-namespace HappyFactory.Services;
+namespace HappyFactory.Projections;
 
 /// <summary>
 /// EF Core read-model DbContext using InMemory provider.
@@ -10,8 +9,8 @@ namespace HappyFactory.Services;
 /// </summary>
 public class ReadModelDbContext(DbContextOptions<ReadModelDbContext> options) : DbContext(options)
 {
-    public DbSet<Product> Products { get; set; } = null!;
-    public DbSet<InventoryItem> InventoryItems { get; set; } = null!;
+    public DbSet<Product> Products { get; private set; } = null!;
+    public DbSet<InventoryItem> InventoryItems { get; private set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -21,8 +20,8 @@ public class ReadModelDbContext(DbContextOptions<ReadModelDbContext> options) : 
         modelBuilder.Entity<Product>(b =>
         {
             b.HasKey(p => p.Id);
-            b.Property(p => p.Name).IsRequired();
-            b.Property(p => p.Sku).IsRequired();
+            b.Property(p => p.Name).IsRequired().HasMaxLength(255);
+            b.Property(p => p.Sku).IsRequired().HasMaxLength(50);
         });
 
         // InventoryItem
