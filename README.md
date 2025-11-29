@@ -1,27 +1,18 @@
 # HappyFactory
 
-HappyFactory is a small example .NET Web API demonstrating a simple event-driven architecture using:
+HappyFactory is a small example .NET Web API demonstrating a simple event sourcing architecture using:
 - FastEndpoints for concise endpoint definitions
 - An in-memory `EventStore` for emitting application/domain events
 - A background `ProjectionService` that projects events into an EF Core InMemory read model
-- EF Core InMemory as a read-model (queries / projections)
-- Swagger (Swashbuckle) for API discovery
+- EF Core InMemory as a read-model (queries/projections)
+- Swagger for API discovery
 
 This project is intended as a small learning/demo project rather than a production-ready system.
 
-## Repository layout
-
-- `HappyFactory/HappyFactory.csproj` — main web application project
-- `HappyFactory/Program.cs` — application bootstrap
-- `HappyFactory/Features/*` — endpoint handlers, requests/responses, and command/query handlers
-- `HappyFactory/Models/*` — domain events, domain model classes
-- `HappyFactory/Services/*` — in-memory `EventStore`, `ProjectionService`, and `ReadModelDbContext`
-- `HappyFactory/HappyFactory.http` — an HTTP client file with quick examples (for editors like VS Code REST Client)
-
 ## Prerequisites
 
-- .NET 9 SDK (the project targets `net9.0`)
-  - Verify with `dotnet --version` (should be a 9.x SDK)
+- .NET 10 SDK (the project targets `net10.0`)
+  - Verify with `dotnet --version` (should be a 10.x SDK)
 
 ## Build & run
 
@@ -32,21 +23,17 @@ From the repository root:
 - `dotnet build`
 
 2. Run the app:
-- `dotnet run --project HappyFactory/HappyFactory.csproj`
+- `dotnet run --project src/HappyFactory/HappyFactory.csproj`
 
-By default the app's development launch configuration typically serves on `http://localhost:5116`. If you need the Swagger UI to be enabled, ensure the environment is `Development`:
+If you need the Swagger UI to be enabled, ensure the environment is `Development`:
 
 - On Linux/macOS:
-  - `ASPNETCORE_ENVIRONMENT=Development dotnet run --project HappyFactory/HappyFactory.csproj`
+  - `ASPNETCORE_ENVIRONMENT=Development dotnet run --project src/HappyFactory/HappyFactory.csproj`
 - On Windows PowerShell:
-  - `$env:ASPNETCORE_ENVIRONMENT = 'Development'; dotnet run --project HappyFactory/HappyFactory.csproj`
+  - `$env:ASPNETCORE_ENVIRONMENT = 'Development'; dotnet run --project src/HappyFactory/HappyFactory.csproj`
 
-When running in Development, Swagger UI is served at the app root, e.g.:
-- `http://localhost:5116/` — Swagger UI
-
-If you prefer to run from inside the project folder:
-- `cd HappyFactory`
-- `dotnet run`
+When running in Development, Swagger UI is served at `/swagger`, e.g.:
+- `http://localhost:5116/swagger` — Swagger UI
 
 ## API
 
@@ -60,32 +47,6 @@ Notes:
 - The API uses an in-memory event store. When you create a product it emits a `ProductCreated` event into the `EventStore`.
 - The `ProjectionService` subscribes to those events and projects them into the EF Core InMemory read model so that queries (GET) read from the read-model.
 - Everything is ephemeral — restart the app and the in-memory stores are cleared.
-
-Example requests (replace `localhost:5116` with whichever URL/port your app listens on):
-
-Create a product (returns 201 Created with JSON body containing created `Id`):
-$ curl -X POST http://localhost:5116/products -H "Content-Type: application/json" -d '{"name":"Toy Car","sku":"TOYCAR-001"}'
-
-Example JSON body:
-- `name` (string) — product name
-- `sku` (string) — product SKU
-
-Successful response (example):
-- `201 Created`
-- Body: `{"id":"<guid>"}`
-
-Query the product:
-$ curl http://localhost:5116/products/<id>
-
-Successful response (example):
-- `200 OK`
-- Body: `{"id":"<guid>","name":"Toy Car","sku":"TOYCAR-001"}`
-
-If the product is not found:
-- `404 Not Found`
-
-Swagger UI
-- When running in `Development`, Swagger UI is available at `/` and provides an interactive view of available endpoints and request/response schemas.
 
 ## Development notes & architecture
 
@@ -113,21 +74,7 @@ If you want to make the system durable:
 
 ## Helpful files
 
-- `HappyFactory/HappyFactory.http` — example HTTP requests usable by REST clients (e.g. VS Code REST Client). Edit/add requests here for quick integration testing.
-
-## Testing
-
-There are no automated tests included in the repository. For manual testing:
-
-1. Start the app.
-2. Use Swagger UI or the provided HTTP file / curl commands to exercise the POST and GET endpoints.
-3. Optionally inspect logs to verify `ProjectionService` is projecting `ProductCreated` events into the read model.
-
-## Contributing
-
-This is a small demo repository. If you'd like to contribute:
-- Open issues for any bugs or clarifications
-- Send a pull request for small improvements (documentation, examples, or minor code hygiene)
+- `src/HappyFactory/HappyFactory.http` — example HTTP requests usable by REST clients (e.g. VS Code REST Client). Edit/add requests here for quick integration testing.
 
 ## License
 
