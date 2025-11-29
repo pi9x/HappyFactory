@@ -19,7 +19,7 @@ public class CreateProductHandler(EventStore eventStore)
         var id = Guid.CreateVersion7();
 
         // Emit domain event to the in-memory event store so projections can pick it up.
-        var ev = new ProductEvents.ProductCreated(id, req.Name, req.Sku);
+        var ev = new ProductEvents.ProductCreated(id, req.Name, req.Sku, DateTime.UtcNow);
         _eventStore.Append(ev);
 
         return id;
